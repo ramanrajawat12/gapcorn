@@ -1,0 +1,4 @@
+/config.local.php
+/node_modules/
+/assets/dist/
+/*.zip

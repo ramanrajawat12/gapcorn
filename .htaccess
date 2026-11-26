@@ -1,0 +1,9 @@
+DirectoryIndex index.php
+
+RedirectMatch 404 "(?i)(?:^|/)\\."
+
+<FilesMatch "^(\.|migrate-sqlite\.php$|config\.local\.php$|schema\.sql$|README\.md$)">
+    Require all denied
+</FilesMatch>
+
+RedirectMatch 404 "(?i)(?:^|/)(?:app|views)(?:/|$)"
