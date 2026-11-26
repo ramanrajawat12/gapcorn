@@ -30,7 +30,7 @@ Replace `your-file.sqlite` with the filename of your existing database. The migr
 ## Demonstrate the reward
 
 1. Create a customer account in a private browser window and verify that the welcome popup awards 10 points.
-2. In a separate browser session, sign in as admin. Select **Modify reward** and save 20. The reward history shows the effective date and time in IST. The dialog preselects the current time. To schedule a change, choose a future date and time using **Effective date** and **Effective time (IST)**.
+2. In a separate browser session, sign in as admin. Select **Update reward** and save 20. The reward history shows the effective date and time in IST. The dialog preselects the current time. To schedule a change, choose a future date and time using **Effective date** and **Effective time (IST)**.
 3. Create a second customer account and check its 20-point award. Sign in to the first account again to check its original 10-point balance.
 4. In the admin dashboard, open **Customers** and try **Edit points** on an individual customer.
 

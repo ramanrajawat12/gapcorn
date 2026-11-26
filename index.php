@@ -15,12 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireCsrf();
     $email = strtolower(trim(post('email')));
     $password = post('password');
+    [$adminEmail] = adminCredentials();
 
     if ($register && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254)) {
         $error = 'Enter a valid email address.';
     } elseif ($register && (strlen($password) < 8 || strlen($password) > 72 || str_contains($password, "\0"))) {
         $error = 'Use a password between 8 and 72 bytes.';
-    } elseif ($register && $email === ADMIN_EMAIL) {
+    } elseif ($register && $adminEmail !== '' && $email === $adminEmail) {
         $error = 'Use a different email address to create a customer account.';
     } elseif ($register) {
         $db = database();

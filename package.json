@@ -11,5 +11,8 @@
     "mini-css-extract-plugin": "^2.10.2",
     "webpack": "^5.113.0",
     "webpack-cli": "^7.3.1"
+  },
+  "overrides": {
+    "zod": "4.6.7"
   }
 }
