@@ -6,6 +6,8 @@
                 <?= csrfField() ?>
                 <input type="hidden" name="action" value="update-reward">
                 <input type="hidden" name="default_effective_at" value="<?= e($effectiveDefault) ?>">
+                <input type="hidden" name="effective_date" value="<?= e($effectiveDate) ?>">
+                <input type="hidden" name="effective_time" value="<?= e($effectiveTime) ?>">
                 <div class="modal-header">
                     <h2 class="modal-title fs-5" id="reward-editor-title">Update first sign-in reward</h2>
                     <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -30,16 +32,16 @@
                     <div class="row g-2 mt-2">
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="reward-effective-date">Effective date</label>
-                            <input class="form-control" id="reward-effective-date" name="effective_date" type="date"
-                                   value="<?= e($effectiveDate) ?>" aria-describedby="reward-effective-hint" required>
+                            <input class="form-control" id="reward-effective-date" type="date"
+                                   value="<?= e($effectiveDate) ?>" aria-describedby="reward-effective-hint" disabled>
                         </div>
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="reward-effective-time">Effective time (IST)</label>
-                            <input class="form-control" id="reward-effective-time" name="effective_time" type="time"
-                                   value="<?= e($effectiveTime) ?>" aria-describedby="reward-effective-hint" required>
+                            <input class="form-control" id="reward-effective-time" type="time"
+                                   value="<?= e($effectiveTime) ?>" aria-describedby="reward-effective-hint" disabled>
                         </div>
                     </div>
-                    <div class="form-text" id="reward-effective-hint">Keep the current time to apply now, or choose a future time. The new amount applies to customers who join from then on.</div>
+                    <div class="form-text" id="reward-effective-hint">The effective date and time are selected automatically when this form opens. The new amount applies only to customers who join from then on.</div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
