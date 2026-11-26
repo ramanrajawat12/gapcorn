@@ -2,6 +2,10 @@
 
 A PHP, Bootstrap 5.0.2, and MySQL demo for a store's first sign-in reward.
 
+## Hosted site
+
+[Open the Gapcorn demo](https://gapcorn-demo.site.je/)
+
 ## Run on WampServer
 
 1. Start Apache and MySQL in WampServer. Use MySQL 8.0.16 or newer and PHP 8.2 or newer. Enable PHP → PHP extensions → pdo_mysql if needed, then restart Apache.
