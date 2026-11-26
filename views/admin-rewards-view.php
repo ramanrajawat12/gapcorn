@@ -1,7 +1,7 @@
 <section class="reward-overview" aria-labelledby="reward-heading">
     <div class="overview-heading mb-0">
         <div>
-            <h1 id="reward-heading">Reward Management</h1>
+            <h1 id="reward-heading">Welcome Reward</h1>
             <p class="muted mb-0"><?= number_format($current['points']) ?> points per first sign-in</p>
         </div>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reward-editor">

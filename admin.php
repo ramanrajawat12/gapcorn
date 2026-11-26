@@ -16,6 +16,9 @@ $customerPage = 'admin.php?view=customers';
 $showCustomers = ($_GET['view'] ?? null) === 'customers';
 $error = '';
 $amount = '';
+$campaignName = post('campaign_name');
+$campaignStart = post('starts_on');
+$campaignExpiry = post('expires_on');
 $effectiveDate = post('effective_date');
 $effectiveTime = post('effective_time');
 $effectiveDefault = post('default_effective_at');
@@ -25,13 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'logout') {
         signOut('admin-login.php');
     }
-    if (!in_array($action, ['update-reward', 'update-purchase-reward', 'update-customer'], true)) {
+    if (!in_array($action, ['update-reward', 'create-purchase-campaign', 'update-customer'], true)) {
         http_response_code(400);
         exit('Invalid action.');
     }
     $showCustomers = $action === 'update-customer';
     $showRewards = $action === 'update-reward';
-    $showPurchaseRewards = $action === 'update-purchase-reward';
+    $showPurchaseRewards = $action === 'create-purchase-campaign';
 }
 
 $db = database();
@@ -54,6 +57,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $error = 'This customer could not be found.';
         }
+    } elseif ($showPurchaseRewards) {
+        $today = new DateTimeImmutable('today', new DateTimeZone('Asia/Kolkata'));
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $campaignStart, new DateTimeZone('Asia/Kolkata'));
+        $expiry = DateTimeImmutable::createFromFormat('!Y-m-d', $campaignExpiry, new DateTimeZone('Asia/Kolkata'));
+        if (strlen($campaignName) < 3 || strlen($campaignName) > 120) {
+            $error = 'Enter a campaign name between 3 and 120 characters.';
+        } elseif ($start === false || $start->format('Y-m-d') !== $campaignStart || $campaignStart !== $today->format('Y-m-d')) {
+            $error = 'The campaign start date must be today.';
+        } elseif ($expiry === false || $expiry->format('Y-m-d') !== $campaignExpiry || $expiry < $today) {
+            $error = 'Choose an expiry date on or after today.';
+        } else {
+            $statement = $db->prepare('INSERT INTO purchase_reward_campaigns (name, points, starts_on, expires_on) VALUES (?, ?, ?, ?)');
+            $statement->execute([$campaignName, $points, $campaignStart, $campaignExpiry]);
+            $_SESSION['admin_notice'] = $campaignName . ' created with ' . number_format($points) . ' reward points.';
+            redirect($purchaseRewardPage);
+        }
     } else {
         $effectiveAt = null;
         $effectiveInput = $effectiveDate . 'T' . $effectiveTime;
@@ -69,8 +88,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($error === '') {
-            $saveReward = static function (array $current) use ($db, $points, $effectiveAt, $showPurchaseRewards): bool {
-                $table = $showPurchaseRewards ? 'purchase_reward_settings' : 'reward_settings';
+            $saveReward = static function (array $current) use ($db, $points, $effectiveAt): bool {
+                $table = 'reward_settings';
                 if ($effectiveAt !== null) {
                     $statement = $db->prepare("
                         INSERT INTO $table (points, effective_at)
@@ -86,21 +105,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $statement->execute([$points]);
                 return true;
             };
-            $changed = $showPurchaseRewards
-                ? writeWithCurrentPurchaseReward($db, $saveReward)
-                : writeWithCurrentReward($db, $saveReward);
+            $changed = writeWithCurrentReward($db, $saveReward);
 
             if ($effectiveAt !== null && !$changed) {
                 $error = 'That time has passed. Choose another date and time in IST.';
             } else {
                 $formattedPoints = number_format($points);
-                $rewardName = $showPurchaseRewards ? 'purchase reward' : 'first sign-in reward';
+                $rewardName = 'first sign-in reward';
                 $_SESSION['admin_notice'] = $effectiveAt !== null
                     ? "The $formattedPoints-point $rewardName is scheduled for " . displayTime($effectiveAt) . ' IST.'
                     : ($changed
                         ? "The $rewardName is now $formattedPoints points."
                         : "The $rewardName is already $formattedPoints points.");
-                redirect($showPurchaseRewards ? $purchaseRewardPage : $rewardPage);
+                redirect($rewardPage);
             }
         }
     }
@@ -123,20 +140,16 @@ if ($showCustomers) {
     $current = currentReward($db);
     $db->commit();
 } elseif ($showPurchaseRewards) {
-    $db->beginTransaction();
-    $settings = $db->query('SELECT id, points, effective_at FROM purchase_reward_settings ORDER BY effective_at DESC, id DESC')->fetchAll();
+    $campaigns = $db->query('SELECT id, name, points, starts_on, expires_on, created_at FROM purchase_reward_campaigns ORDER BY starts_on DESC, id DESC')->fetchAll();
     if ($error === '') {
-        $effectiveDefault = (new DateTimeImmutable('now', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d\TH:i');
-        [$effectiveDate, $effectiveTime] = explode('T', $effectiveDefault, 2);
+        $campaignStart = (new DateTimeImmutable('today', new DateTimeZone('Asia/Kolkata')))->format('Y-m-d');
     }
-    $current = currentPurchaseReward($db);
-    $db->commit();
 }
 
 if (!$showCustomers && !$showRewards && !$showPurchaseRewards) {
     $registeredCount = (int) $db->query('SELECT COUNT(*) FROM customers')->fetchColumn();
 }
-$title = $showCustomers ? 'Customers' : ($showRewards ? 'Reward Management' : ($showPurchaseRewards ? 'Purchase Rewards' : 'Dashboard'));
+$title = $showCustomers ? 'Customers' : ($showRewards ? 'Welcome Reward' : ($showPurchaseRewards ? 'Purchase Reward' : 'Dashboard'));
 pageStart($title, 'dashboard');
 ?>
 <div class="workspace">
@@ -152,11 +165,11 @@ pageStart($title, 'dashboard');
             <h2 class="section-label">Modules</h2>
             <a class="side-link<?= $showCustomers ? ' active' : '' ?>" href="<?= e($customerPage) ?>"
                <?= $showCustomers ? 'aria-current="page"' : '' ?>><?= icon('customers', 19) ?> Customers</a>
-            <h2 class="section-label mt-4">Master Entries</h2>
+            <h2 class="section-label mt-4">Reward Management</h2>
             <a class="side-link<?= $showRewards ? ' active' : '' ?>" href="<?= e($rewardPage) ?>"
-               <?= $showRewards ? 'aria-current="page"' : '' ?>><?= icon('gift', 19) ?> Reward Management</a>
+               <?= $showRewards ? 'aria-current="page"' : '' ?>><?= icon('gift', 19) ?> Welcome Reward</a>
             <a class="side-link<?= $showPurchaseRewards ? ' active' : '' ?>" href="<?= e($purchaseRewardPage) ?>"
-               <?= $showPurchaseRewards ? 'aria-current="page"' : '' ?>><?= icon('sales', 19) ?> Purchase Rewards</a>
+               <?= $showPurchaseRewards ? 'aria-current="page"' : '' ?>><?= icon('sales', 19) ?> Purchase Reward</a>
         </nav>
         <form method="post" class="mt-auto flex-shrink-0 border-top px-3 py-2">
             <?= csrfField() ?>
@@ -169,7 +182,7 @@ pageStart($title, 'dashboard');
                 <button type="button" class="btn menu-button d-lg-none" data-bs-toggle="offcanvas"
                         data-bs-target="#admin-sidebar" aria-controls="admin-sidebar" aria-label="Open navigation"><?= icon('menu') ?></button>
                 <div>
-                    <span class="section-label d-block"><?= $showRewards || $showPurchaseRewards ? 'Master Entries' : ($showCustomers ? 'Modules' : 'Store administration') ?></span>
+                    <span class="section-label d-block"><?= $showRewards || $showPurchaseRewards ? 'Reward Management' : ($showCustomers ? 'Modules' : 'Store administration') ?></span>
                     <span class="header-title"><?= e($title) ?></span>
                 </div>
             </div>
@@ -187,7 +200,7 @@ pageStart($title, 'dashboard');
 if ($showRewards) {
     require __DIR__ . '/views/admin-reward-dialog.php';
 } elseif ($showPurchaseRewards) {
-    require __DIR__ . '/views/admin-purchase-reward-dialog.php';
+    require __DIR__ . '/views/admin-purchase-campaign-dialog.php';
 }
 pageEnd();
 ?>

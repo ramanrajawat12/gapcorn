@@ -64,38 +64,3 @@ function writeWithCurrentReward(PDO $db, callable $write): mixed
         throw $exception;
     }
 }
-
-function currentPurchaseReward(PDO $db): array
-{
-    $reward = $db->query('
-        SELECT id, points, effective_at
-        FROM purchase_reward_settings
-        WHERE effective_at <= UTC_TIMESTAMP(3)
-        ORDER BY effective_at DESC, id DESC LIMIT 1
-    ')->fetch();
-    if ($reward === false) {
-        throw new RuntimeException('Import schema.sql to initialize the purchase reward settings.');
-    }
-    return $reward;
-}
-
-function writeWithCurrentPurchaseReward(PDO $db, callable $write): mixed
-{
-    $db->beginTransaction();
-    try {
-        $anchor = $db->query('SELECT id FROM purchase_reward_settings WHERE id = 1 FOR UPDATE');
-        if ($anchor->fetchColumn() === false) {
-            throw new RuntimeException('Import schema.sql to initialize the purchase reward settings.');
-        }
-        $anchor->closeCursor();
-        $current = currentPurchaseReward($db);
-        $result = $write($current);
-        $db->commit();
-        return $result;
-    } catch (Throwable $exception) {
-        if ($db->inTransaction()) {
-            $db->rollBack();
-        }
-        throw $exception;
-    }
-}
