@@ -28,11 +28,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($action === 'logout') {
         signOut('admin-login.php');
     }
-    if (!in_array($action, ['update-reward', 'create-purchase-campaign', 'update-customer'], true)) {
+    if (!in_array($action, ['update-reward', 'create-purchase-campaign'], true)) {
         http_response_code(400);
         exit('Invalid action.');
     }
-    $showCustomers = $action === 'update-customer';
+    $showCustomers = false;
     $showRewards = $action === 'update-reward';
     $showPurchaseRewards = $action === 'create-purchase-campaign';
 }
@@ -43,20 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $points = filter_var($amount, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0, 'max_range' => MAX_POINTS]]);
     if ($points === false) {
         $error = 'Enter a whole number between 0 and ' . number_format(MAX_POINTS) . '.';
-    } elseif ($showCustomers) {
-        if (!preg_match('/\A([1-9]\d*)\z/', post('customer'), $match)) {
-            $error = 'Choose a customer from the directory.';
-        } else {
-            $statement = $db->prepare("UPDATE customers SET points = :points WHERE id = :id");
-            $statement->bindValue(':points', $points, PDO::PARAM_INT);
-            $statement->bindValue(':id', $match[0], PDO::PARAM_STR);
-            $statement->execute();
-            if ($statement->rowCount() === 1) {
-                $_SESSION['admin_notice'] = 'Customer balance saved at ' . number_format($points) . ' points.';
-                redirect($customerPage);
-            }
-            $error = 'This customer could not be found.';
-        }
     } elseif ($showPurchaseRewards) {
         $today = new DateTimeImmutable('today', new DateTimeZone('Asia/Kolkata'));
         $start = DateTimeImmutable::createFromFormat('!Y-m-d', $campaignStart, new DateTimeZone('Asia/Kolkata'));
@@ -127,9 +113,11 @@ $notice = $_SESSION['admin_notice'] ?? '';
 unset($_SESSION['admin_notice']);
 
 if ($showCustomers) {
-    $customers = $db->query('SELECT id, email, points, rewarded_at AS joined_at,
-        COALESCE(last_active_at, rewarded_at) AS last_active_at
-        FROM customers ORDER BY joined_at DESC, id DESC')->fetchAll();
+    $customers = $db->query("SELECT id, name, email, phone, address, points, rewarded_at AS joined_at,
+        COALESCE(last_active_at, rewarded_at) AS last_active_at,
+        COALESCE((SELECT GROUP_CONCAT(cp.product_name ORDER BY cp.purchased_at DESC SEPARATOR ', ')
+            FROM customer_purchases cp WHERE cp.customer_id = customers.id), '') AS products_purchased
+        FROM customers ORDER BY joined_at DESC, id DESC")->fetchAll();
 } elseif ($showRewards) {
     $db->beginTransaction();
     $settings = $db->query('SELECT id, points, effective_at FROM reward_settings ORDER BY effective_at DESC, id DESC')->fetchAll();

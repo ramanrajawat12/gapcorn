@@ -25,13 +25,25 @@ CREATE TABLE IF NOT EXISTS purchase_reward_campaigns (
 
 CREATE TABLE IF NOT EXISTS customers (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NULL,
     email VARCHAR(254) COLLATE utf8mb4_bin NOT NULL UNIQUE,
+    phone VARCHAR(30) NULL,
+    address TEXT NULL,
     password_hash VARCHAR(255) NOT NULL,
     points INT NOT NULL CHECK (points >= 0),
     reward_id INT UNSIGNED NOT NULL,
     rewarded_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_active_at DATETIME(3) NULL,
     CONSTRAINT customers_welcome_reward_fk FOREIGN KEY (reward_id) REFERENCES reward_settings(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS customer_purchases (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT UNSIGNED NOT NULL,
+    product_name VARCHAR(180) NOT NULL,
+    purchased_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT customer_purchases_customer_fk FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    INDEX customer_purchases_customer_date (customer_id, purchased_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS demo_customers (

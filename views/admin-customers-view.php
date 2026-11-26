@@ -6,7 +6,7 @@ $now = time();
         <div>
             <p class="section-label overview-label">Customer directory</p>
             <h1 id="directory-title">Customers</h1>
-            <p class="muted mb-0">View customer profiles and update points balances.</p>
+            <p class="muted mb-0">View registered customer profiles and purchase details.</p>
         </div>
     </div>
 </section>
@@ -35,7 +35,7 @@ $now = time();
             <tbody role="rowgroup">
                 <?php foreach ($customers as $customer): ?>
                     <?php
-                    $name = $customer['email'];
+                    $name = trim((string) $customer['name']) !== '' ? $customer['name'] : $customer['email'];
                     $initials = strtoupper(substr($name, 0, 1));
                     $joined = (new DateTimeImmutable($customer['joined_at']))
                         ->setTimezone(new DateTimeZone('Asia/Kolkata'))->format('M j, Y');
@@ -72,10 +72,11 @@ $now = time();
                         </td>
                         <td class="directory-points" role="cell"><span class="point-pill"><?= number_format($customer['points']) ?></span></td>
                         <td class="directory-action" role="cell">
-                            <button class="btn btn-outline-primary edit-balance" type="button" data-bs-toggle="modal" data-bs-target="#customer-editor"
-                                    data-customer="<?= e($customer['id']) ?>"
-                                    data-name="<?= e($name) ?>" data-points="<?= e($customer['points']) ?>"
-                                    aria-label="Edit points for <?= e($name) ?>"><?= icon('edit', 15) ?> Edit points</button>
+                            <button class="btn btn-outline-primary view-customer" type="button" data-bs-toggle="modal" data-bs-target="#customer-details"
+                                    data-name="<?= e($name) ?>" data-email="<?= e($customer['email']) ?>"
+                                    data-phone="<?= e($customer['phone'] ?? '') ?>" data-address="<?= e($customer['address'] ?? '') ?>"
+                                    data-products="<?= e($customer['products_purchased']) ?>" data-points="<?= e($customer['points']) ?>"
+                                    aria-label="View details for <?= e($name) ?>" title="View customer details"><?= icon('eye', 18) ?></button>
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -86,28 +87,27 @@ $now = time();
            aria-label="Scroll customer table horizontally" aria-controls="customer-table-scroll" hidden>
     <p class="empty-state mb-0" id="customer-no-results" role="status" hidden><?= $customers === [] ? 'No customers have registered yet.' : 'No customers match your search.' ?></p>
 </section>
-<div class="modal fade" id="customer-editor" tabindex="-1" aria-labelledby="customer-editor-title">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="customer-details" tabindex="-1" aria-labelledby="customer-details-title">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <form method="post" action="<?= e($customerPage) ?>">
-                <?= csrfField() ?>
-                <input type="hidden" name="action" value="update-customer">
-                <input type="hidden" name="customer" id="edit-customer-id">
-                <div class="modal-header">
-                    <h2 class="modal-title fs-5" id="customer-editor-title">Edit customer points</h2>
-                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <div>
+                    <p class="section-label overview-label mb-1">Customer profile</p>
+                    <h2 class="modal-title fs-5" id="customer-details-title">Customer details</h2>
                 </div>
-                <div class="modal-body">
-                    <p class="muted text-break" id="edit-customer-name"></p>
-                    <label class="form-label" for="customer-points">Points balance</label>
-                    <input class="form-control" id="customer-points" name="points" type="number" min="0"
-                           max="<?= MAX_POINTS ?>" step="1" inputmode="numeric" data-modal-focus required>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button>
-                    <button class="btn btn-primary" type="submit">Save points</button>
-                </div>
-            </form>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body customer-detail-grid">
+                <div class="customer-detail"><span>Name</span><strong id="detail-customer-name"></strong></div>
+                <div class="customer-detail"><span>Email address</span><strong id="detail-customer-email" class="text-break"></strong></div>
+                <div class="customer-detail"><span>Phone number</span><strong id="detail-customer-phone"></strong></div>
+                <div class="customer-detail"><span>Points</span><strong id="detail-customer-points"></strong></div>
+                <div class="customer-detail customer-detail-wide"><span>Address</span><strong id="detail-customer-address"></strong></div>
+                <div class="customer-detail customer-detail-wide"><span>Products purchased</span><strong id="detail-customer-products"></strong></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" type="button" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>

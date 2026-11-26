@@ -187,18 +187,22 @@ if (adminSidebar) {
     });
 }
 
-const customerEditor = document.getElementById('customer-editor');
+const customerDetails = document.getElementById('customer-details');
 
-customerEditor?.addEventListener('show.bs.modal', (event) => {
+customerDetails?.addEventListener('show.bs.modal', (event) => {
     const customer = event.relatedTarget?.dataset;
-    if (!customer?.customer) {
+    if (!customer?.email) {
         event.preventDefault();
         return;
     }
 
-    document.getElementById('edit-customer-id').value = customer.customer;
-    document.getElementById('edit-customer-name').textContent = customer.name;
-    document.getElementById('customer-points').value = customer.points;
+    const fallback = 'Not provided yet';
+    document.getElementById('detail-customer-name').textContent = customer.name || fallback;
+    document.getElementById('detail-customer-email').textContent = customer.email;
+    document.getElementById('detail-customer-phone').textContent = customer.phone || fallback;
+    document.getElementById('detail-customer-points').textContent = `${Number(customer.points).toLocaleString()} points`;
+    document.getElementById('detail-customer-address').textContent = customer.address || fallback;
+    document.getElementById('detail-customer-products').textContent = customer.products || 'No purchases recorded yet';
 });
 
 const search = document.getElementById('customer-search');

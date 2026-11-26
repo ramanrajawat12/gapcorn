@@ -15,6 +15,7 @@ function icon(string $name, int $size = 20): string
         'gift' => '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12m0-12H8a2.5 2.5 0 1 1 2.5-2.5L12 8Zm0 0h4a2.5 2.5 0 1 0-2.5-2.5L12 8Z"/>',
         'clock' => '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
         'edit' => '<path d="m14 5 5 5M4 20l4.5-1 12-12a1.5 1.5 0 0 0 0-2.1l-1.4-1.4a1.5 1.5 0 0 0-2.1 0L5 15.5 4 20Z"/>',
+        'eye' => '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>',
         'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
         'arrow' => '<path d="M4 12h15m-6-6 6 6-6 6"/>',
         'check' => '<path d="m5 12 4 4L19 6"/>',
