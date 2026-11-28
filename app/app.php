@@ -5,10 +5,13 @@ require __DIR__ . '/database.php';
 date_default_timezone_set('UTC');
 
 const MAX_POINTS = 2147483647;
+const ADMIN_IDLE_TIMEOUT = 15 * 60;
+const ADMIN_SESSION_TIMEOUT = 8 * 60 * 60;
 
 ini_set('session.use_strict_mode', '1');
 session_name('gapcorn_session');
 session_set_cookie_params([
+    'lifetime' => 0,
     'path' => rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/') . '/',
     'httponly' => true,
     'samesite' => 'Lax',
@@ -16,6 +19,20 @@ session_set_cookie_params([
 ]);
 session_start();
 header('Cache-Control: no-store');
+
+if (($_SESSION['role'] ?? null) === 'admin') {
+    $now = time();
+    if ($now - ($_SESSION['admin_last_seen'] ?? 0) >= ADMIN_IDLE_TIMEOUT
+        || $now - ($_SESSION['admin_signed_in_at'] ?? 0) >= ADMIN_SESSION_TIMEOUT) {
+        $_SESSION = [];
+        session_regenerate_id(true);
+        if (basename($_SERVER['SCRIPT_NAME']) === 'admin.php') {
+            redirect('admin-login.php?expired=1');
+        }
+    } else {
+        $_SESSION['admin_last_seen'] = $now;
+    }
+}
 
 function adminCredentials(): array
 {
@@ -70,6 +87,9 @@ function signIn(string $role, array $details = []): void
 {
     session_regenerate_id(true);
     $_SESSION = ['role' => $role] + $details;
+    if ($role === 'admin') {
+        $_SESSION['admin_signed_in_at'] = $_SESSION['admin_last_seen'] = time();
+    }
 }
 
 function signOut(string $page): never

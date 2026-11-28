@@ -52,12 +52,12 @@ function pageStart(string $title, string $bodyClass): void
     <?php
 }
 
-function brand(string $subtitle = ''): void
+function brand(string $subtitle = '', string $name = 'Gapcorn'): void
 {
     ?>
     <div class="brand">
         <span class="brand-mark"><?= icon('brand', 22) ?></span>
-        <span>Gapcorn<?php if ($subtitle !== ''): ?><small><?= e($subtitle) ?></small><?php endif; ?></span>
+        <span><?= e($name) ?><?php if ($subtitle !== ''): ?><small><?= e($subtitle) ?></small><?php endif; ?></span>
     </div>
     <?php
 }

@@ -147,6 +147,22 @@ document.querySelectorAll('.modal').forEach((modal) => {
         });
     }
 
+    if (modal.id === 'purchase-campaign-editor') {
+        const startTime = modal.querySelector('#campaign-start-time');
+        if (startTime) {
+            const clock = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true,
+            });
+            const refresh = () => { startTime.value = clock.format(new Date()); };
+            let timer;
+            modal.addEventListener('show.bs.modal', () => {
+                refresh();
+                timer = setInterval(refresh, 1000);
+            });
+            modal.addEventListener('hidden.bs.modal', () => clearInterval(timer));
+        }
+    }
+
     if (modal.id === 'welcome-reward') {
         modal.addEventListener('shown.bs.modal', () => celebrateReward(modal));
         modal.addEventListener('hidden.bs.modal', () => {
@@ -196,13 +212,13 @@ customerDetails?.addEventListener('show.bs.modal', (event) => {
         return;
     }
 
-    const fallback = 'Not provided yet';
+    const fallback = 'Not Provided Yet';
     document.getElementById('detail-customer-name').textContent = customer.name || fallback;
     document.getElementById('detail-customer-email').textContent = customer.email;
     document.getElementById('detail-customer-phone').textContent = customer.phone || fallback;
-    document.getElementById('detail-customer-points').textContent = `${Number(customer.points).toLocaleString()} points`;
+    document.getElementById('detail-customer-points').textContent = `${Number(customer.points).toLocaleString()} Points`;
     document.getElementById('detail-customer-address').textContent = customer.address || fallback;
-    document.getElementById('detail-customer-products').textContent = customer.products || 'No purchases recorded yet';
+    document.getElementById('detail-customer-products').textContent = customer.products || 'No Purchases Recorded Yet';
 });
 
 const search = document.getElementById('customer-search');
